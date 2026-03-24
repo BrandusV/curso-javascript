@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SELETORES DE QUERY</title>
+
+    <style>
+        aside {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #eb00b0;
+            height: 100vh;
+            width: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Cabeçalho com id para ser selecionado via querySelector('#título-principal') -->
+    <header>
+        <h1 id="título-principal">Exemplo de Seletores de Query</h1>
+        <!-- Itens de navegação com class="menu-item" para seleção via querySelectorAll('.menu-item') -->
+        <nav>
+            <ul>
+                <li class="menu-item">Ínicio</li>
+                <li class="menu-item">Sobre</li>
+                <li class="menu-item">Contato</li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <!-- Seção com id para seleção via querySelector('#secao-principal') -->
+        <section id="secao-principal">
+            <h2> Seção Principal </h2>
+            <!-- Parágrafos com class="paragrafo" para seleção via querySelectorAll('.paragrafo') -->
+            <p class="paragrafo">Este é o primeiro parágrafo da seção principal </p>
+            <p class="paragrafo">Outro parágrafo</p>
+            <!-- Botão com id para seleção via querySelector('#meu-botao') -->
+            <button id="meu-botao"> Clique aqui</button>
+        </section>
+        <!-- Elemento aside selecionável via querySelector('aside') -->
+        <aside>
+            <h2>Barra Lateral</h2>
+            <p>Parágrafo da barra lateral</p>
+        </aside>
+    </main>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
