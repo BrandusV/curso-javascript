@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MODIFICAÇÃO DE ELEMENTOS</title>
+
+    <style>
+        aside {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #eb00b0;
+            height: 100vh;
+            width: 200px;
+        }
+
+        /* Classe inicial do h1 — será mantida, removida ou re-adicionada via classList */
+        .titulo {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            color: fuchsia;
+        }
+
+        /* Adicionada via classList.add('destaque') */
+        .destaque {
+            background-color: #fffde7;
+            padding: 8px;
+        }
+
+        /* Adicionada via classList.add('altera-cor-bg') após 3 segundos */
+        .altera-cor-bg {
+            color: #dd00ed;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- h1 com id e classes para demonstrar modificação de innerText e classList -->
+    <header>
+        <h1 id="título-principal" class="titulo principal">Exemplo de Seletores de Elemento</h1>
+        <!-- Itens de navegação com class="menu-item" -->
+        <nav>
+            <ul>
+                <li class="menu-item">Ínicio</li>
+                <li class="menu-item">Sobre</li>
+                <li class="menu-item">Contato</li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <!-- Seção cujo innerHTML será modificado via JavaScript -->
+        <section id="secao-principal">
+            <h2>Seção Principal</h2>
+            <!-- Parágrafos com class="paragrafo" — um novo será adicionado via innerHTML -->
+            <p class="paragrafo">Este é o primeiro parágrafo da seção principal</p>
+            <p class="paragrafo">Outro parágrafo</p>
+            <!-- Botão que terá o atributo disabled adicionado via setAttribute() -->
+            <button id="meu-botao" name="meu-botao">Clique aqui</button>
+        </section>
+        <!-- Elemento aside -->
+        <aside>
+            <h2>Barra Lateral</h2>
+            <p>Parágrafo da barra lateral</p>
+        </aside>
+    </main>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
