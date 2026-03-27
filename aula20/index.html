@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVENTOS NO JAVASCRIPT</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #16213e;
+            padding: 24px 32px;
+            border-bottom: 3px solid #eb00b0;
+        }
+
+        header h1 {
+            color: #eb00b0;
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 20px;
+            padding: 24px 32px;
+            flex: 1;
+        }
+
+        section {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #eb00b0;
+        }
+
+        section h2 {
+            color: #eb00b0;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+        }
+
+        /* Botões */
+        button {
+            background: #eb00b0;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 4px 4px 4px 0;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #c2009a;
+        }
+
+        button.secundario {
+            background: #0f3460;
+        }
+
+        button.secundario:hover {
+            background: #1a4a80;
+        }
+
+        /* Inputs */
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #0f3460;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: 2px solid #eb00b0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+
+        /* Área interativa de mouse */
+        #area-mouse {
+            background: #0f3460;
+            border-radius: 6px;
+            padding: 24px;
+            text-align: center;
+            margin-top: 10px;
+            cursor: crosshair;
+            transition: background 0.3s;
+            user-select: none;
+        }
+
+        /* Saída de teclado */
+        #saida-teclado {
+            margin-top: 10px;
+            padding: 10px;
+            background: #0f3460;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #ccc;
+            min-height: 38px;
+        }
+
+        /* Lista de delegação */
+        #lista-delegacao {
+            list-style: none;
+            margin-bottom: 12px;
+        }
+
+        #lista-delegacao li {
+            padding: 8px 12px;
+            background: #0f3460;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #lista-delegacao li:hover {
+            background: #1a4a80;
+        }
+
+        /* Painel de log */
+        #painel-log {
+            grid-column: 1 / -1;
+            background: #0d0d1a;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #00e5ff;
+        }
+
+        #painel-log h2 {
+            color: #00e5ff;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+        }
+
+        #lista-log {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #lista-log li {
+            font-size: 0.82rem;
+            color: #00e5ff;
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a2e;
+        }
+
+        #lista-log li:first-child {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #btn-limpar {
+            background: #333;
+            margin-top: 12px;
+        }
+
+        #btn-limpar:hover {
+            background: #555;
+        }
+
+        /* Formulário */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* Seção de window events */
+        #info-janela {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 10px;
+            background: #0f3460;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1 id="titulo-principal">Eventos no JavaScript</h1>
+        <p>Interaja com os elementos abaixo e observe o Log de Eventos no painel inferior</p>
+    </header>
+
+    <main>
+
+        <!-- ===== EVENTOS DE MOUSE ===== -->
+        <section id="secao-mouse">
+            <h2>Eventos de Mouse</h2>
+            <button id="btn-click">Click / Mousedown / Mouseup</button>
+            <button id="btn-duplo">Dblclick aqui</button>
+            <!-- Área para mouseenter, mouseleave, contextmenu -->
+            <div id="area-mouse">Passe o mouse / clique direito aqui</div>
+        </section>
+
+        <!-- ===== EVENTOS DE TECLADO ===== -->
+        <section id="secao-teclado">
+            <h2>Eventos de Teclado</h2>
+            <label for="campo-texto">Digite algo (keydown, keyup, input):</label>
+            <input type="text" id="campo-texto" placeholder="Digite aqui e veja o log..." />
+            <p id="saida-teclado">Aguardando digitação...</p>
+        </section>
+
+        <!-- ===== EVENTOS DE FORMULÁRIO ===== -->
+        <section id="secao-formulario">
+            <h2>Eventos de Formulário</h2>
+            <form id="meu-formulario">
+                <!-- focus e blur no campo nome -->
+                <label for="campo-nome">Nome (focus / blur):</label>
+                <input type="text" id="campo-nome" placeholder="Seu nome..." />
+
+                <!-- change no select -->
+                <label for="campo-opcao">Linguagem favorita (change):</label>
+                <select id="campo-opcao">
+                    <option value="">Escolha...</option>
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="Python">Python</option>
+                    <option value="TypeScript">TypeScript</option>
+                </select>
+
+                <!-- submit no formulário -->
+                <button type="submit">Enviar (submit)</button>
+            </form>
+        </section>
+
+        <!-- ===== DELEGAÇÃO DE EVENTOS ===== -->
+        <section id="secao-delegacao">
+            <h2>Delegação de Eventos</h2>
+            <p style="font-size:0.8rem;color:#aaa;margin-bottom:10px;">
+                Um único listener no elemento pai captura cliques em todos os filhos — inclusive os adicionados dinamicamente.
+            </p>
+            <ul id="lista-delegacao">
+                <li>Item 1</li>
+                <li>Item 2</li>
+                <li>Item 3</li>
+            </ul>
+            <button id="btn-adicionar" class="secundario">Adicionar item dinamicamente</button>
+        </section>
+
+        <!-- ===== EVENTOS DE JANELA ===== -->
+        <section id="secao-janela">
+            <h2>Eventos de Janela</h2>
+            <p style="font-size:0.8rem;color:#aaa;margin-bottom:10px;">
+                Resize e scroll são capturados globalmente no objeto <strong>window</strong>.
+            </p>
+            <div id="info-janela">Redimensione a janela ou role a página...</div>
+        </section>
+
+        <!-- ===== PAINEL DE LOG ===== -->
+        <aside id="painel-log">
+            <h2>&#128196; Log de Eventos</h2>
+            <ul id="lista-log"></ul>
+            <button id="btn-limpar">Limpar log</button>
+        </aside>
+
+    </main>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
