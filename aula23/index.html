@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promises no JavaScript</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #16213e;
+            padding: 24px 32px;
+            border-bottom: 3px solid #eb00b0;
+        }
+
+        header h1 {
+            color: #eb00b0;
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* Diagrama de estados da Promise */
+        .diagrama-estados {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 18px 32px;
+            background: #12192e;
+            border-bottom: 1px solid #1a1a3e;
+            flex-wrap: wrap;
+        }
+
+        .estado {
+            text-align: center;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .estado.pending  { background: #1e3a5f; color: #64b5f6; }
+        .estado.resolved { background: #1b3a1f; color: #69f0ae; }
+        .estado.rejected { background: #3a1b1b; color: #ff5252; }
+
+        .seta {
+            padding: 0 10px;
+            color: #555;
+            font-size: 1.2rem;
+        }
+
+        .seta-label {
+            font-size: 0.72rem;
+            color: #555;
+            text-align: center;
+            padding: 0 6px;
+        }
+
+        .seta-grupo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 24px 32px;
+            flex: 1;
+        }
+
+        section {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #eb00b0;
+        }
+
+        section h2 {
+            color: #eb00b0;
+            margin-bottom: 6px;
+            font-size: 1.1rem;
+        }
+
+        section p.descricao {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 14px;
+            line-height: 1.55;
+        }
+
+        /* Botões */
+        button {
+            background: #eb00b0;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin: 4px 4px 4px 0;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: #c2009a; }
+
+        button.secundario { background: #0f3460; }
+        button.secundario:hover { background: #1a4a80; }
+
+        button.sucesso { background: #1b5e20; }
+        button.sucesso:hover { background: #256b29; }
+
+        button.perigo { background: #7b1c1c; }
+        button.perigo:hover { background: #a02020; }
+
+        button:disabled {
+            background: #333;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Saída de código */
+        .saida-codigo {
+            background: #0d0d1a;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            color: #00e5ff;
+            min-height: 52px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 8px;
+            border: 1px solid #1a1a3e;
+            transition: color 0.3s;
+        }
+
+        .saida-codigo.pending  { color: #64b5f6; }
+        .saida-codigo.sucesso  { color: #69f0ae; }
+        .saida-codigo.erro     { color: #ff5252; }
+
+        /* Barra de progresso simulada */
+        .barra-wrap {
+            background: #0d0d1a;
+            border-radius: 4px;
+            height: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .barra-fill {
+            height: 100%;
+            width: 0%;
+            background: #eb00b0;
+            border-radius: 4px;
+            transition: width 0.3s linear;
+        }
+
+        /* Seção de largura dupla */
+        .coluna-dupla {
+            grid-column: 1 / -1;
+        }
+
+        /* Inputs */
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 9px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #0f3460;
+            color: #e0e0e0;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        input:focus { outline: 2px solid #eb00b0; }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 0.82rem;
+        }
+
+        /* Linha de botões dos exemplos Promise.all / race / any */
+        .linha-botoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        /* Cards de tarefas paralelas (Promise.all) */
+        .tarefas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .tarefa-card {
+            background: #0d0d1a;
+            border-radius: 4px;
+            padding: 10px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            border: 1px solid #1a1a3e;
+            min-height: 54px;
+        }
+
+        .tarefa-card .tarefa-nome {
+            color: #aaa;
+            margin-bottom: 4px;
+        }
+
+        .tarefa-card .tarefa-status {
+            color: #64b5f6;
+        }
+
+        /* Painel de log */
+        #painel-log {
+            grid-column: 1 / -1;
+            background: #0d0d1a;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #00e5ff;
+        }
+
+        #painel-log h2 {
+            color: #00e5ff;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+        }
+
+        #lista-log {
+            list-style: none;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        #lista-log li {
+            font-size: 0.82rem;
+            color: #00e5ff;
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a2e;
+            font-family: 'Courier New', monospace;
+        }
+
+        #lista-log li:first-child {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #btn-limpar-log {
+            background: #333;
+            margin-top: 12px;
+        }
+
+        #btn-limpar-log:hover { background: #555; }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Promises no JavaScript</h1>
+        <p>Gerenciando operações assíncronas — estados, encadeamento e métodos estáticos</p>
+    </header>
+
+    <!--
+        DIAGRAMA DE ESTADOS
+        Uma Promise sempre começa em "pending" e termina em
+        "fulfilled" (resolve) ou "rejected" (reject) — nunca volta atrás.
+    -->
+    <div class="diagrama-estados">
+        <div class="estado pending">pending<br><small>aguardando</small></div>
+        <div class="seta-grupo">
+            <span class="seta-label">resolve()</span>
+            <span class="seta">→</span>
+        </div>
+        <div class="estado resolved">fulfilled<br><small>resolvida</small></div>
+        <span style="padding:0 18px;color:#333;">|</span>
+        <div class="estado pending">pending<br><small>aguardando</small></div>
+        <div class="seta-grupo">
+            <span class="seta-label">reject()</span>
+            <span class="seta">→</span>
+        </div>
+        <div class="estado rejected">rejected<br><small>rejeitada</small></div>
+    </div>
+
+    <main>
+
+        <!-- ===== SEÇÃO 1 — Criando uma Promise ===== -->
+        <!--
+            new Promise((resolve, reject) => { ... })
+            O construtor recebe uma função chamada "executor".
+            Dentro do executor decidimos quando a operação teve
+            sucesso (resolve) ou falhou (reject).
+        -->
+        <section id="secao-criar">
+            <h2>1. Criando uma Promise</h2>
+            <p class="descricao">
+                Escolha se a operação vai ter sucesso ou falhar e veja
+                a Promise passando de <strong>pending</strong> para
+                <strong>fulfilled</strong> ou <strong>rejected</strong>.
+            </p>
+
+            <label for="input-delay-criar">Tempo de espera (ms):</label>
+            <input type="number" id="input-delay-criar" value="1500" min="200" max="5000" />
+
+            <button id="btn-criar-resolve" class="sucesso">Criar → resolve()</button>
+            <button id="btn-criar-reject" class="perigo">Criar → reject()</button>
+
+            <div class="saida-codigo pending" id="saida-criar">Clique em um botão para criar a Promise...</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 2 — .then(), .catch() e .finally() ===== -->
+        <!--
+            .then(onFulfilled)   → executa quando a Promise resolve
+            .catch(onRejected)   → executa quando a Promise rejeita
+            .finally(onFinally)  → executa SEMPRE, independente do resultado
+            São métodos de instância encadeáveis na Promise.
+        -->
+        <section id="secao-then-catch">
+            <h2>2. .then() · .catch() · .finally()</h2>
+            <p class="descricao">
+                <strong>.then()</strong> trata o sucesso,
+                <strong>.catch()</strong> trata o erro e
+                <strong>.finally()</strong> sempre executa — ideal para
+                esconder spinners ou liberar recursos.
+            </p>
+
+            <button id="btn-simular-sucesso" class="sucesso">Simular sucesso</button>
+            <button id="btn-simular-erro" class="perigo">Simular erro</button>
+
+            <!-- Barra que fica ativa durante o pending e some no finally -->
+            <div class="barra-wrap">
+                <div class="barra-fill" id="barra-then"></div>
+            </div>
+
+            <div class="saida-codigo" id="saida-then">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 3 — Encadeamento de .then() ===== -->
+        <!--
+            Cada .then() retorna uma nova Promise, permitindo
+            encadear etapas sequenciais de forma legível.
+            O valor retornado por um .then() é passado como
+            argumento para o próximo .then() da cadeia.
+        -->
+        <section id="secao-encadeamento">
+            <h2>3. Encadeamento de .then()</h2>
+            <p class="descricao">
+                Cada etapa recebe o resultado da anterior e transforma o valor.
+                Se qualquer etapa falhar, o <strong>.catch()</strong> no final
+                captura o erro — sem precisar de try/catch em cada passo.
+            </p>
+
+            <label for="input-numero">Número inicial:</label>
+            <input type="number" id="input-numero" value="5" min="1" max="100" />
+
+            <button id="btn-encadear">Iniciar pipeline</button>
+
+            <div class="saida-codigo" id="saida-encadeamento">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 4 — Promise.resolve() e Promise.reject() ===== -->
+        <!--
+            Métodos estáticos que criam Promises já concluídas.
+            Promise.resolve(valor)  → cria uma Promise já fulfilled
+            Promise.reject(motivo)  → cria uma Promise já rejected
+            Úteis para normalizar valores síncronos em código assíncrono.
+        -->
+        <section id="secao-estaticos-simples">
+            <h2>4. Promise.resolve() e Promise.reject()</h2>
+            <p class="descricao">
+                Criam Promises <strong>já resolvidas ou rejeitadas</strong>
+                instantaneamente — sem espera. Muito usados em testes
+                e para envolver valores síncronos em uma Promise.
+            </p>
+
+            <label for="input-valor-estatico">Valor a envolver:</label>
+            <input type="text" id="input-valor-estatico" value="dados prontos" />
+
+            <button id="btn-resolve-estatico" class="sucesso">Promise.resolve()</button>
+            <button id="btn-reject-estatico" class="perigo">Promise.reject()</button>
+
+            <div class="saida-codigo" id="saida-estaticos">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 5 — Promise.all() ===== -->
+        <!--
+            Promise.all([ p1, p2, p3 ])
+            Aguarda TODAS as Promises terminarem.
+            Resolve quando todas resolvem (resultado: array com todos os valores).
+            Rejeita imediatamente se QUALQUER uma rejeitar (fail-fast).
+            Use quando todas as operações são obrigatórias.
+        -->
+        <section id="secao-all" class="coluna-dupla">
+            <h2>5. Promise.all() — todas devem resolver</h2>
+            <p class="descricao">
+                Executa três "requisições" em paralelo. Resolve com um array de resultados
+                somente quando <strong>todas</strong> concluem. Se qualquer uma falhar,
+                rejeita imediatamente (comportamento <em>fail-fast</em>).
+            </p>
+
+            <!-- Cards que mostram o status individual de cada Promise -->
+            <div class="tarefas-grid">
+                <div class="tarefa-card" id="card-all-1">
+                    <div class="tarefa-nome">Tarefa A</div>
+                    <div class="tarefa-status" id="status-all-1">—</div>
+                </div>
+                <div class="tarefa-card" id="card-all-2">
+                    <div class="tarefa-nome">Tarefa B</div>
+                    <div class="tarefa-status" id="status-all-2">—</div>
+                </div>
+                <div class="tarefa-card" id="card-all-3">
+                    <div class="tarefa-nome">Tarefa C</div>
+                    <div class="tarefa-status" id="status-all-3">—</div>
+                </div>
+            </div>
+
+            <div class="linha-botoes">
+                <button id="btn-all-sucesso" class="sucesso">Todas resolvem</button>
+                <button id="btn-all-falha" class="perigo">Tarefa B falha</button>
+            </div>
+
+            <div class="saida-codigo" id="saida-all">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 6 — Promise.allSettled() ===== -->
+        <!--
+            Promise.allSettled([ p1, p2, p3 ])
+            Aguarda TODAS terminarem, independente de resolve ou reject.
+            Resolve com um array de objetos { status, value/reason }.
+            Nunca rejeita — ideal quando você quer o resultado de cada
+            uma mesmo que algumas falhem.
+        -->
+        <section id="secao-allsettled">
+            <h2>6. Promise.allSettled()</h2>
+            <p class="descricao">
+                Diferente do <strong>all()</strong>, nunca é rejeitado.
+                Aguarda todas terminarem e entrega um objeto de status
+                para cada Promise — <em>{ status, value }</em> ou
+                <em>{ status, reason }</em>.
+            </p>
+
+            <button id="btn-allsettled">Executar (uma vai falhar)</button>
+
+            <div class="saida-codigo" id="saida-allsettled">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 7 — Promise.race() ===== -->
+        <!--
+            Promise.race([ p1, p2, p3 ])
+            Resolve ou rejeita com o resultado da PRIMEIRA Promise
+            que concluir — seja resolve ou reject.
+            Use para implementar timeouts: race([operacao, timeout]).
+        -->
+        <section id="secao-race">
+            <h2>7. Promise.race() — vence a mais rápida</h2>
+            <p class="descricao">
+                Retorna o resultado da <strong>primeira</strong> Promise
+                que terminar (resolve ou reject). As demais são ignoradas.
+                Útil para implementar <em>timeouts</em>.
+            </p>
+
+            <button id="btn-race">Iniciar corrida</button>
+
+            <div class="saida-codigo" id="saida-race">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 8 — Promise.any() ===== -->
+        <!--
+            Promise.any([ p1, p2, p3 ])
+            Resolve com o valor da PRIMEIRA Promise que resolver.
+            Só rejeita se TODAS rejeitarem (AggregateError).
+            Diferença do race(): ignora rejeições intermediárias.
+        -->
+        <section id="secao-any">
+            <h2>8. Promise.any() — primeira a ter sucesso</h2>
+            <p class="descricao">
+                Resolve com a <strong>primeira que tiver sucesso</strong>.
+                Diferente do <em>race()</em>, rejeições intermediárias são
+                ignoradas. Só falha se <strong>todas</strong> rejeitarem.
+            </p>
+
+            <button id="btn-any-parcial">Duas falham, uma resolve</button>
+            <button id="btn-any-todas-falham" class="perigo">Todas rejeitam</button>
+
+            <div class="saida-codigo" id="saida-any">—</div>
+        </section>
+
+
+        <!-- ===== PAINEL DE LOG ===== -->
+        <aside id="painel-log">
+            <h2>&#128196; Log de Execução</h2>
+            <ul id="lista-log"></ul>
+            <button id="btn-limpar-log">Limpar log</button>
+        </aside>
+
+    </main>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
