@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício 8 - Busca de Usuários GitHub</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background: #0f0f1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 48px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+        }
+
+        h1 {
+            color: #e0d7ff;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            border-left: 4px solid #7c3aed;
+            padding-left: 14px;
+        }
+
+        .subtitulo {
+            color: #5a5480;
+            font-size: 0.85rem;
+            margin-bottom: 36px;
+            padding-left: 18px;
+        }
+
+        /* Campo de busca + botão */
+        .busca-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .busca-form input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #3b2f6e;
+            background: #1a1a2e;
+            color: #e0d7ff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .busca-form input[type="text"]:focus {
+            border-color: #7c3aed;
+        }
+
+        .busca-form input[type="text"]::placeholder {
+            color: #5a5480;
+        }
+
+        .busca-form button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            background: #7c3aed;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .busca-form button:hover { background: #6d28d9; }
+        .busca-form button:active { transform: scale(0.97); }
+
+        .busca-form button:disabled {
+            background: #3b2f6e;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Mensagem de erro de validação */
+        #msg-erro {
+            font-size: 0.85rem;
+            color: #f87171;
+            min-height: 20px;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+
+        /* Spinner de carregamento */
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 32px 0;
+            color: #7c3aed;
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            border: 3px solid #3b2f6e;
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: girar 0.7s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes girar {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Mensagem "não encontrado" */
+        #msg-vazio {
+            display: none;
+            text-align: center;
+            padding: 40px 0;
+            color: #5a5480;
+            font-size: 0.95rem;
+        }
+
+        /* Lista de resultados */
+        #lista-resultados {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Card de cada usuário */
+        .card-usuario {
+            background: #1e1b38;
+            border: 1.5px solid #3b2f6e;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: border-color 0.2s, transform 0.15s;
+            animation: surgir 0.25s ease;
+        }
+
+        @keyframes surgir {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-usuario:hover {
+            border-color: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        /* Avatar circular */
+        .avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2px solid #7c3aed;
+            flex-shrink: 0;
+            object-fit: cover;
+        }
+
+        /* Informações do usuário */
+        .info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .info-login {
+            color: #e0d7ff;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .info-nome {
+            color: #9d8cdb;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .info-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.78rem;
+            color: #5a5480;
+        }
+
+        .info-meta span { white-space: nowrap; }
+
+        /* Botão "Ver perfil" */
+        .btn-perfil {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1.5px solid #7c3aed;
+            background: transparent;
+            color: #c4b5fd;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s, color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-perfil:hover {
+            background: #7c3aed;
+            color: #fff;
+        }
+
+        /* Contador de resultados */
+        #contador-resultados {
+            font-size: 0.8rem;
+            color: #5a5480;
+            margin-bottom: 14px;
+            min-height: 18px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <h1>&#128269; Busca GitHub</h1>
+        <p class="subtitulo">
+            Pesquise usuários na API do GitHub e veja seus dados
+        </p>
+
+        <!-- Campo de busca + botão -->
+        <div class="busca-form">
+            <input
+                type="text"
+                id="input-busca"
+                placeholder="Digite um nome de usuário ou termo..."
+                maxlength="100"
+                autocomplete="off"
+            />
+            <button id="btn-buscar">&#128269; Buscar</button>
+        </div>
+
+        <!-- Mensagem de validação (campo vazio) -->
+        <p id="msg-erro"></p>
+
+        <!-- Contador de resultados encontrados -->
+        <p id="contador-resultados"></p>
+
+        <!-- Spinner exibido durante o fetch -->
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Buscando na API do GitHub...</p>
+        </div>
+
+        <!-- Mensagem quando nenhum resultado é encontrado -->
+        <p id="msg-vazio">Não foram encontrados usuários para esta pesquisa.</p>
+
+        <!-- Lista de cards de usuários -->
+        <ul id="lista-resultados"></ul>
+
+    </div>
+
+    <script src="exercicio8.js"></script>
+</body>
+
+</html>
