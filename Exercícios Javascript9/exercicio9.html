@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício 9 - Lista de Tarefas com localStorage</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background: #0f0f1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 48px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        h1 {
+            color: #e0d7ff;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            border-left: 4px solid #7c3aed;
+            padding-left: 14px;
+        }
+
+        .subtitulo {
+            color: #5a5480;
+            font-size: 0.82rem;
+            margin-bottom: 32px;
+            padding-left: 18px;
+        }
+
+        /* Campo + botão Adicionar */
+        .cadastro {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .cadastro input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #3b2f6e;
+            background: #1a1a2e;
+            color: #e0d7ff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .cadastro input[type="text"]:focus { border-color: #7c3aed; }
+        .cadastro input[type="text"]::placeholder { color: #5a5480; }
+
+        .cadastro button {
+            padding: 12px 22px;
+            border-radius: 8px;
+            border: none;
+            background: #7c3aed;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+
+        .cadastro button:hover  { background: #6d28d9; }
+        .cadastro button:active { transform: scale(0.97); }
+
+        /* Mensagem de erro */
+        #msg-erro {
+            font-size: 0.85rem;
+            color: #f87171;
+            min-height: 20px;
+            margin-bottom: 20px;
+            padding-left: 4px;
+        }
+
+        /* Contador e badge de persistência */
+        .barra-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            min-height: 20px;
+        }
+
+        #contador {
+            font-size: 0.78rem;
+            color: #5a5480;
+        }
+
+        #badge-storage {
+            font-size: 0.72rem;
+            color: #69f0ae;
+            display: none;
+        }
+
+        /* Lista de tarefas */
+        #lista-tarefas {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Item base */
+        #lista-tarefas li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 16px;
+            border-radius: 10px;
+            transition: opacity 0.3s, background 0.3s;
+            animation: surgir 0.2s ease;
+        }
+
+        @keyframes surgir {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tarefa pendente */
+        #lista-tarefas li.pendente {
+            background: #1e1b38;
+            border: 1.5px solid #4c3599;
+        }
+
+        /* Tarefa concluída */
+        #lista-tarefas li.concluida {
+            background: #111120;
+            border: 1.5px solid #2a2a3a;
+            opacity: 0.6;
+        }
+
+        /* Checkbox */
+        #lista-tarefas input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #7c3aed;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* Descrição */
+        .descricao {
+            flex: 1;
+            font-size: 1rem;
+            color: #cfc8f5;
+            transition: color 0.3s, text-decoration 0.3s;
+            word-break: break-word;
+        }
+
+        .concluida .descricao {
+            text-decoration: line-through;
+            color: #5a5480;
+        }
+
+        /* Badge de status */
+        .badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .pendente .badge  { background: #3b1f6e; color: #c4a9ff; }
+        .concluida .badge { background: #1e1e2e; color: #4a4468; }
+
+        /* Botão excluir */
+        .btn-excluir {
+            background: transparent;
+            border: 1.5px solid #4a3060;
+            color: #6d4a8a;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            padding: 0;
+        }
+
+        .btn-excluir:hover {
+            background: #7b1c1c;
+            border-color: #f87171;
+            color: #fca5a5;
+        }
+
+        /* Mensagem lista vazia */
+        #msg-vazia {
+            display: none;
+            text-align: center;
+            color: #3b2f6e;
+            font-size: 0.9rem;
+            padding: 32px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>&#10003; Lista de Tarefas</h1>
+        <p class="subtitulo">Tarefas salvas automaticamente no localStorage</p>
+
+        <!-- Campo de cadastro -->
+        <div class="cadastro">
+            <input
+                type="text"
+                id="input-descricao"
+                placeholder="Descrição da nova tarefa..."
+                maxlength="120"
+            />
+            <button id="btn-adicionar">Adicionar</button>
+        </div>
+
+        <!-- Mensagem de validação -->
+        <p id="msg-erro"></p>
+
+        <!-- Contador + badge de restauração -->
+        <div class="barra-info">
+            <span id="contador"></span>
+            <span id="badge-storage">&#128190; Tarefas restauradas do localStorage</span>
+        </div>
+
+        <!-- Mensagem quando não há tarefas -->
+        <p id="msg-vazia">Nenhuma tarefa ainda. Adicione a primeira acima!</p>
+
+        <!-- Lista renderizada pelo JavaScript -->
+        <ul id="lista-tarefas"></ul>
+    </div>
+
+    <script src="exercicio9.js"></script>
+</body>
+
+</html>
