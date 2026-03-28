@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercício 7 - Curtir com localStorage</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            background: #0f0f1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 48px 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 560px;
+        }
+
+        h1 {
+            color: #e0d7ff;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            border-left: 4px solid #7c3aed;
+            padding-left: 14px;
+        }
+
+        .subtitulo {
+            color: #5a5480;
+            font-size: 0.85rem;
+            margin-bottom: 36px;
+            padding-left: 18px;
+        }
+
+        /* Linha com campo de texto + botão Curtir */
+        .curtir-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .curtir-form input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #3b2f6e;
+            background: #1a1a2e;
+            color: #e0d7ff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .curtir-form input[type="text"]:focus {
+            border-color: #7c3aed;
+        }
+
+        .curtir-form input[type="text"]::placeholder {
+            color: #5a5480;
+        }
+
+        /* Botão Curtir */
+        .curtir-form button {
+            padding: 12px 22px;
+            border-radius: 8px;
+            border: none;
+            background: #7c3aed;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .curtir-form button:hover {
+            background: #6d28d9;
+        }
+
+        .curtir-form button:active {
+            transform: scale(0.97);
+        }
+
+        /* Mensagem de erro */
+        #msg-erro {
+            font-size: 0.85rem;
+            color: #f87171;
+            min-height: 20px;
+            margin-bottom: 20px;
+            padding-left: 4px;
+        }
+
+        /* Card que exibe o resultado das curtidas */
+        .card-curtidas {
+            background: #1e1b38;
+            border: 1.5px solid #4c3599;
+            border-radius: 10px;
+            padding: 20px 24px;
+        }
+
+        .card-curtidas .label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7c3aed;
+            margin-bottom: 8px;
+        }
+
+        /* Parágrafo principal que muda conforme as regras */
+        #paragrafo-curtidas {
+            font-size: 1rem;
+            color: #cfc8f5;
+            line-height: 1.5;
+        }
+
+        /* Contador de curtidas */
+        #contador {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #5a5480;
+        }
+
+        /* Indicador de persistência (localStorage) */
+        #badge-storage {
+            margin-top: 14px;
+            font-size: 0.75rem;
+            color: #69f0ae;
+            display: none;
+        }
+
+        /* Botão Limpar — separado visualmente do botão Curtir */
+        #btn-limpar {
+            display: block;
+            margin-top: 16px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1.5px solid #4c3599;
+            background: transparent;
+            color: #f87171;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        #btn-limpar:hover {
+            background: #2d1a1a;
+            color: #fca5a5;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>&#10084; Curtir</h1>
+        <p class="subtitulo">
+            Digite seu nome e clique em curtir — a lista persiste ao recarregar a página
+        </p>
+
+        <!-- Campo de texto + botão Curtir -->
+        <div class="curtir-form">
+            <input type="text" id="input-nome" placeholder="Seu nome..." maxlength="50" />
+            <button id="btn-curtir">&#10084; Curtir</button>
+        </div>
+
+        <!-- Mensagem de erro (campo vazio ou duplicado) -->
+        <p id="msg-erro"></p>
+
+        <!-- Card de curtidas -->
+        <div class="card-curtidas">
+            <p class="label">Curtidas</p>
+
+            <!-- Parágrafo atualizado pelas regras do exercício -->
+            <p id="paragrafo-curtidas">Ninguém curtiu</p>
+
+            <!-- Contador numérico -->
+            <p id="contador"></p>
+
+            <!-- Indicador que aparece quando os dados vêm do localStorage -->
+            <p id="badge-storage">&#128190; Lista restaurada do localStorage</p>
+        </div>
+
+        <!--
+            Botão Limpar:
+            Remove todos os nomes do array E do localStorage,
+            voltando ao estado inicial "Ninguém curtiu".
+        -->
+        <button id="btn-limpar">&#128465; Limpar lista</button>
+    </div>
+
+    <script src="exercicio7.js"></script>
+</body>
+
+</html>
