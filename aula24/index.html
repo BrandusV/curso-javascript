@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Assíncrono</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #16213e;
+            padding: 24px 32px;
+            border-bottom: 3px solid #eb00b0;
+        }
+
+        header h1 {
+            color: #eb00b0;
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* Linha do tempo evolutiva: Callback → Promise → async/await */
+        .linha-evolutiva {
+            display: flex;
+            align-items: stretch;
+            padding: 0 32px;
+            background: #12192e;
+            border-bottom: 1px solid #1a1a3e;
+            overflow-x: auto;
+        }
+
+        .era {
+            flex: 1;
+            min-width: 160px;
+            padding: 14px 18px;
+            border-right: 1px solid #1a1a3e;
+            font-size: 0.8rem;
+        }
+
+        .era:last-child { border-right: none; }
+
+        .era-titulo {
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .era-sub { color: #555; font-size: 0.72rem; margin-bottom: 6px; }
+        .era-desc { color: #aaa; line-height: 1.5; }
+
+        .era.callback .era-titulo  { color: #f87171; }
+        .era.promise  .era-titulo  { color: #64b5f6; }
+        .era.async    .era-titulo  { color: #69f0ae; }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 24px 32px;
+            flex: 1;
+        }
+
+        section {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #eb00b0;
+        }
+
+        section h2 {
+            color: #eb00b0;
+            margin-bottom: 6px;
+            font-size: 1.1rem;
+        }
+
+        section p.descricao {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 14px;
+            line-height: 1.55;
+        }
+
+        /* Botões */
+        button {
+            background: #eb00b0;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin: 4px 4px 4px 0;
+            transition: background 0.2s;
+        }
+
+        button:hover           { background: #c2009a; }
+        button.secundario      { background: #0f3460; }
+        button.secundario:hover{ background: #1a4a80; }
+        button.sucesso         { background: #1b5e20; }
+        button.sucesso:hover   { background: #256b29; }
+        button.perigo          { background: #7b1c1c; }
+        button.perigo:hover    { background: #a02020; }
+        button:disabled        { background: #333; cursor: not-allowed; opacity: 0.6; }
+
+        /* Saída de código */
+        .saida-codigo {
+            background: #0d0d1a;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            color: #00e5ff;
+            min-height: 52px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 8px;
+            border: 1px solid #1a1a3e;
+        }
+
+        .saida-codigo.pending { color: #64b5f6; }
+        .saida-codigo.sucesso { color: #69f0ae; }
+        .saida-codigo.erro    { color: #ff5252; }
+        .saida-codigo.aviso   { color: #ffab40; }
+
+        /* Inputs */
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 9px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #0f3460;
+            color: #e0e0e0;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        input:focus, select:focus { outline: 2px solid #eb00b0; }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 0.82rem;
+        }
+
+        /* Coluna dupla */
+        .coluna-dupla { grid-column: 1 / -1; }
+
+        /* Visualizador da Event Loop */
+        .eventloop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .eventloop-caixa {
+            background: #0d0d1a;
+            border: 1px solid #1a1a3e;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .eventloop-caixa h3 {
+            font-size: 0.75rem;
+            color: #eb00b0;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .eventloop-lista {
+            list-style: none;
+            min-height: 80px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+        }
+
+        .eventloop-lista li {
+            padding: 4px 6px;
+            margin-bottom: 3px;
+            border-radius: 3px;
+            animation: surgir 0.25s ease;
+        }
+
+        @keyframes surgir {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .item-call-stack { background: #1e3a5f; color: #64b5f6; }
+        .item-web-api    { background: #1b3a1f; color: #69f0ae; }
+        .item-queue      { background: #2a1f00; color: #ffab40; }
+
+        /* Comparativo sequencial vs paralelo */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .compare-col h3 {
+            font-size: 0.82rem;
+            color: #aaa;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #1a1a3e;
+        }
+
+        .compare-col h3.col-seq  { color: #f87171; }
+        .compare-col h3.col-par  { color: #69f0ae; }
+
+        /* Barra de tempo */
+        .barra-wrap {
+            background: #0d0d1a;
+            border-radius: 3px;
+            height: 8px;
+            margin: 6px 0 10px;
+            overflow: hidden;
+        }
+
+        .barra-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 3px;
+            transition: width 0.25s linear;
+        }
+
+        .barra-seq { background: #f87171; }
+        .barra-par { background: #69f0ae; }
+
+        /* Painel de log */
+        #painel-log {
+            grid-column: 1 / -1;
+            background: #0d0d1a;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #00e5ff;
+        }
+
+        #painel-log h2 {
+            color: #00e5ff;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+        }
+
+        #lista-log {
+            list-style: none;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        #lista-log li {
+            font-size: 0.82rem;
+            color: #00e5ff;
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a2e;
+            font-family: 'Courier New', monospace;
+        }
+
+        #lista-log li:first-child { color: #fff; font-weight: bold; }
+
+        #btn-limpar-log           { background: #333; margin-top: 12px; }
+        #btn-limpar-log:hover     { background: #555; }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>JavaScript Assíncrono</h1>
+        <p>Callbacks, Promises, async/await, fetch e a Event Loop — quando e como usar cada um</p>
+    </header>
+
+    <!--
+        LINHA EVOLUTIVA
+        Mostra a evolução histórica do JavaScript assíncrono.
+        Cada era resolve os problemas da anterior.
+    -->
+    <div class="linha-evolutiva">
+        <div class="era callback">
+            <div class="era-titulo">1. Callbacks</div>
+            <div class="era-sub">ES1 — 1997</div>
+            <div class="era-desc">Funções passadas como argumento para serem chamadas depois. Funcionam, mas geram "callback hell" ao aninhar.</div>
+        </div>
+        <div class="era promise">
+            <div class="era-titulo">2. Promises</div>
+            <div class="era-sub">ES6 — 2015</div>
+            <div class="era-desc">Objeto que representa um valor futuro. Resolve o aninhamento com .then() e .catch() encadeados.</div>
+        </div>
+        <div class="era async">
+            <div class="era-titulo">3. async / await</div>
+            <div class="era-sub">ES8 — 2017</div>
+            <div class="era-desc">Sintaxe sobre Promises que permite escrever código assíncrono com aparência síncrona. Mais legível e fácil de depurar.</div>
+        </div>
+        <div class="era" style="border-left:1px solid #1a1a3e;">
+            <div class="era-titulo" style="color:#ffab40;">4. Event Loop</div>
+            <div class="era-sub">Mecanismo do motor JS</div>
+            <div class="era-desc">O que torna tudo possível. Move tarefas entre Call Stack, Web APIs e a Fila de Callbacks automaticamente.</div>
+        </div>
+    </div>
+
+    <main>
+
+        <!-- ===== SEÇÃO 1 — Callbacks ===== -->
+        <!--
+            Callback = função passada como argumento para ser chamada
+            depois que uma operação assíncrona terminar.
+            É o padrão mais antigo — base de setTimeout, setInterval,
+            eventos DOM e Node.js tradicional.
+
+            Problema — Callback Hell (pirâmide da perdição):
+            Quando há muitas operações dependentes, os callbacks se
+            aninham e o código fica ilegível e difícil de manter.
+        -->
+        <section id="secao-callback">
+            <h2>1. Callbacks — o padrão original</h2>
+            <p class="descricao">
+                Uma função é passada como argumento e chamada quando a
+                operação termina. Simples para um nível, mas vira
+                <strong>"callback hell"</strong> ao aninhar etapas dependentes.
+            </p>
+
+            <button id="btn-callback-simples">Callback simples (1 nível)</button>
+            <button id="btn-callback-hell" class="perigo">Callback hell (3 níveis)</button>
+
+            <div class="saida-codigo" id="saida-callback">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 2 — async / await básico ===== -->
+        <!--
+            async/await é açúcar sintático sobre Promises.
+            Não cria um novo mecanismo — apenas torna o código
+            assíncrono mais parecido com código síncrono.
+
+            async → marca uma função como assíncrona.
+                    Ela sempre retorna uma Promise automaticamente.
+                    Mesmo "return 42" vira Promise.resolve(42).
+
+            await → pausa a execução da função async até a Promise
+                    ao lado resolver. Só pode ser usado dentro de
+                    funções marcadas com async.
+                    await promessa  ≡  promessa.then(...)
+        -->
+        <section id="secao-async-basico">
+            <h2>2. async / await — sintaxe moderna</h2>
+            <p class="descricao">
+                <strong>async</strong> marca a função como assíncrona.
+                <strong>await</strong> pausa a função até a Promise resolver —
+                sem bloquear o restante da página.
+            </p>
+
+            <label for="input-await-delay">Tempo de espera (ms):</label>
+            <input type="number" id="input-await-delay" value="1500" min="300" max="4000" />
+
+            <button id="btn-async-basico">Executar função async</button>
+
+            <div class="saida-codigo" id="saida-async-basico">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 3 — try/catch com async/await ===== -->
+        <!--
+            Com .then()/.catch() os erros são capturados pelo .catch().
+            Com async/await usamos try/catch — exatamente como código síncrono.
+
+            try  { const dados = await buscarDados(); }
+            catch(erro) { console.error(erro.message); }
+            finally     { esconderLoading(); }          ← sempre executa
+
+            Vantagem: o fluxo de erro fica junto com o fluxo normal,
+            facilitando a leitura e o debug.
+        -->
+        <section id="secao-try-catch">
+            <h2>3. try / catch / finally com async</h2>
+            <p class="descricao">
+                Erros em <strong>await</strong> são capturados com
+                <strong>try/catch</strong> — sem precisar de .catch().
+                <strong>finally</strong> sempre executa, ideal para
+                esconder indicadores de carregamento.
+            </p>
+
+            <button id="btn-try-sucesso" class="sucesso">Simular sucesso</button>
+            <button id="btn-try-erro" class="perigo">Simular erro</button>
+
+            <div class="saida-codigo" id="saida-try-catch">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 4 — fetch() com async/await ===== -->
+        <!--
+            fetch() é a API nativa do navegador para requisições HTTP.
+            Retorna uma Promise que resolve com um objeto Response.
+            Dois awaits são necessários:
+              1. await fetch(url)         → aguarda a resposta chegar
+              2. await response.json()    → aguarda o corpo ser lido e parseado
+
+            Importante: fetch() só rejeita em falhas de REDE.
+            Respostas 404, 500 etc. chegam como fulfilled!
+            Por isso verificamos response.ok antes de prosseguir.
+        -->
+        <section id="secao-fetch">
+            <h2>4. fetch() — requisições HTTP reais</h2>
+            <p class="descricao">
+                <strong>fetch()</strong> faz requisições HTTP e retorna uma Promise.
+                Dois <strong>await</strong> são necessários: um para a resposta
+                chegar e outro para ler o corpo JSON.
+                Usamos a API pública JSONPlaceholder.
+            </p>
+
+            <label for="input-post-id">ID do post (1 a 100):</label>
+            <input type="number" id="input-post-id" value="1" min="1" max="100" />
+
+            <button id="btn-fetch-post">Buscar post</button>
+            <button id="btn-fetch-404" class="perigo">Forçar erro 404</button>
+
+            <div class="saida-codigo" id="saida-fetch">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 5 — Sequencial vs Paralelo ===== -->
+        <!--
+            SEQUENCIAL (await um por um):
+              const a = await buscar(1);   // espera terminar
+              const b = await buscar(2);   // só começa depois do a
+              // tempo total ≈ tempo(a) + tempo(b)
+
+            PARALELO (Promise.all + await):
+              const [a, b] = await Promise.all([buscar(1), buscar(2)]);
+              // as duas começam juntas
+              // tempo total ≈ max(tempo(a), tempo(b))
+
+            Use sequencial quando b depende do resultado de a.
+            Use paralelo quando as operações são independentes entre si.
+        -->
+        <section id="secao-sequencial-paralelo" class="coluna-dupla">
+            <h2>5. Sequencial vs Paralelo com await</h2>
+            <p class="descricao">
+                <strong>await</strong> um por um = sequencial (soma dos tempos).
+                <strong>Promise.all + await</strong> = paralelo (tempo do mais lento).
+                Use paralelo sempre que as operações forem independentes entre si.
+            </p>
+
+            <div style="display:flex;gap:10px;margin-bottom:10px;">
+                <button id="btn-sequencial">Executar sequencialmente</button>
+                <button id="btn-paralelo" class="sucesso">Executar em paralelo</button>
+            </div>
+
+            <div class="compare-grid">
+                <div class="compare-col">
+                    <h3 class="col-seq">Sequencial (await um por um)</h3>
+                    <div class="barra-wrap"><div class="barra-fill barra-seq" id="barra-seq"></div></div>
+                    <div class="saida-codigo" id="saida-seq">—</div>
+                </div>
+                <div class="compare-col">
+                    <h3 class="col-par">Paralelo (Promise.all)</h3>
+                    <div class="barra-wrap"><div class="barra-fill barra-par" id="barra-par"></div></div>
+                    <div class="saida-codigo" id="saida-par">—</div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 6 — Event Loop ===== -->
+        <!--
+            A Event Loop é o mecanismo que permite JS (single-thread)
+            executar código assíncrono sem bloquear.
+
+            Componentes:
+              Call Stack    → pilha de funções sendo executadas agora
+              Web APIs      → timer, fetch, eventos — rodam fora da thread JS
+              Callback Queue→ funções prontas esperando para entrar na Stack
+              Microtask Queue → fila de alta prioridade (Promises, queueMicrotask)
+                               drena COMPLETAMENTE antes da Callback Queue
+
+            Ordem de execução:
+              1. Código síncrono (Call Stack)
+              2. Microtasks — .then(), await (Microtask Queue)
+              3. Macrotasks — setTimeout, setInterval (Callback Queue)
+
+            Por isso um setTimeout(fn, 0) roda DEPOIS de todas as Promises
+            pendentes, mesmo que o delay seja zero.
+        -->
+        <section id="secao-eventloop" class="coluna-dupla">
+            <h2>6. A Event Loop — como o JS assíncrono funciona por dentro</h2>
+            <p class="descricao">
+                O JavaScript é <strong>single-thread</strong>: executa uma coisa por vez.
+                A Event Loop coordena três áreas: a <strong>Call Stack</strong> (execução atual),
+                as <strong>Web APIs</strong> (tarefas em segundo plano) e a <strong>Fila de Callbacks</strong>
+                (prontos para executar). Clique para animar o fluxo passo a passo.
+            </p>
+
+            <div style="margin-bottom:10px;">
+                <button id="btn-loop-demo">Animar Event Loop</button>
+                <button id="btn-loop-reset" class="secundario">Resetar</button>
+            </div>
+
+            <div class="eventloop-grid">
+                <div class="eventloop-caixa">
+                    <h3>&#128204; Call Stack</h3>
+                    <ul class="eventloop-lista" id="el-stack"></ul>
+                </div>
+                <div class="eventloop-caixa">
+                    <h3>&#9728;&#65039; Web APIs</h3>
+                    <ul class="eventloop-lista" id="el-webapi"></ul>
+                </div>
+                <div class="eventloop-caixa">
+                    <h3>&#128228; Fila de Callbacks</h3>
+                    <ul class="eventloop-lista" id="el-queue"></ul>
+                </div>
+            </div>
+
+            <div class="saida-codigo" id="saida-eventloop" style="margin-top:12px;">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 7 — Quando usar cada abordagem ===== -->
+        <!--
+            Guia de decisão rápido:
+
+            Callback    → handlers de eventos DOM (addEventListener),
+                          APIs legadas (Node.js estilo antigo).
+                          Evite para fluxos assíncronos complexos.
+
+            Promise     → quando precisa de compatibilidade ou de usar
+                          os métodos estáticos (.all, .race, .any, .allSettled).
+
+            async/await → padrão moderno para qualquer operação assíncrona.
+                          Mais legível, depurável e fácil de manter.
+                          Use await + try/catch em vez de .then/.catch.
+
+            fetch()     → requisições HTTP. Sempre com async/await + verificação
+                          de response.ok + try/catch para erros de rede.
+        -->
+        <section id="secao-guia" class="coluna-dupla">
+            <h2>7. Guia — quando usar cada abordagem</h2>
+            <p class="descricao">
+                Selecione um cenário e veja qual abordagem é recomendada e por quê.
+            </p>
+
+            <label for="select-cenario">Cenário:</label>
+            <select id="select-cenario">
+                <option value="">Escolha um cenário...</option>
+                <option value="evento">Ouvir um clique de botão</option>
+                <option value="timer">Executar algo após N segundos</option>
+                <option value="fetch-simples">Buscar dados de uma API (uma requisição)</option>
+                <option value="fetch-depende">Buscar dados dependentes em sequência (post → autor)</option>
+                <option value="fetch-paralelo">Buscar dados independentes em paralelo</option>
+                <option value="fetch-qualquer">Tentar múltiplas fontes, usar a primeira que responder</option>
+                <option value="erro">Tratar erros de operação assíncrona</option>
+                <option value="legado">Integrar com biblioteca que usa callbacks antigos</option>
+            </select>
+
+            <div class="saida-codigo" id="saida-guia">—</div>
+        </section>
+
+
+        <!-- ===== PAINEL DE LOG ===== -->
+        <aside id="painel-log">
+            <h2>&#128196; Log de Execução</h2>
+            <ul id="lista-log"></ul>
+            <button id="btn-limpar-log">Limpar log</button>
+        </aside>
+
+    </main>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
