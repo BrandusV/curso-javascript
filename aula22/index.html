@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Storage no JavaScript</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #16213e;
+            padding: 24px 32px;
+            border-bottom: 3px solid #eb00b0;
+        }
+
+        header h1 {
+            color: #eb00b0;
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* Tabela comparativa no topo */
+        .tabela-comparativa {
+            margin: 24px 32px 0;
+            border-collapse: collapse;
+            width: calc(100% - 64px);
+            font-size: 0.83rem;
+        }
+
+        .tabela-comparativa th {
+            background: #0f3460;
+            color: #eb00b0;
+            padding: 10px 14px;
+            text-align: left;
+            border: 1px solid #1a1a3e;
+        }
+
+        .tabela-comparativa td {
+            padding: 9px 14px;
+            border: 1px solid #1a1a3e;
+            color: #ccc;
+            vertical-align: top;
+        }
+
+        .tabela-comparativa tr:nth-child(even) td {
+            background: #16213e;
+        }
+
+        .tabela-comparativa tr:nth-child(odd) td {
+            background: #12192e;
+        }
+
+        .destaque-local {
+            color: #69f0ae;
+            font-weight: bold;
+        }
+
+        .destaque-session {
+            color: #ffab40;
+            font-weight: bold;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 24px 32px;
+            flex: 1;
+        }
+
+        section {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #eb00b0;
+        }
+
+        /* Cor de destaque por storage */
+        section.local {
+            border-left-color: #69f0ae;
+        }
+
+        section.session {
+            border-left-color: #ffab40;
+        }
+
+        section h2 {
+            color: #eb00b0;
+            margin-bottom: 6px;
+            font-size: 1.1rem;
+        }
+
+        section.local h2 {
+            color: #69f0ae;
+        }
+
+        section.session h2 {
+            color: #ffab40;
+        }
+
+        section p.descricao {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 14px;
+            line-height: 1.55;
+        }
+
+        /* Botões */
+        button {
+            background: #eb00b0;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 18px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin: 4px 4px 4px 0;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #c2009a;
+        }
+
+        button.local {
+            background: #1b5e20;
+        }
+
+        button.local:hover {
+            background: #256b29;
+        }
+
+        button.session {
+            background: #7c4b00;
+        }
+
+        button.session:hover {
+            background: #9e6000;
+        }
+
+        button.secundario {
+            background: #0f3460;
+        }
+
+        button.secundario:hover {
+            background: #1a4a80;
+        }
+
+        button.perigo {
+            background: #7b1c1c;
+        }
+
+        button.perigo:hover {
+            background: #a02020;
+        }
+
+        /* Inputs */
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #0f3460;
+            color: #e0e0e0;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: 2px solid #eb00b0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 0.82rem;
+        }
+
+        /* Área de saída */
+        .saida-codigo {
+            background: #0d0d1a;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.82rem;
+            color: #00e5ff;
+            min-height: 52px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 6px;
+            border: 1px solid #1a1a3e;
+        }
+
+        .saida-codigo.erro {
+            color: #ff5252;
+        }
+
+        .saida-codigo.sucesso {
+            color: #69f0ae;
+        }
+
+        .saida-codigo.aviso {
+            color: #ffab40;
+        }
+
+        /* Linha de campos lado a lado */
+        .campo-linha {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .campo-linha input {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        /* Seção de largura dupla */
+        .coluna-dupla {
+            grid-column: 1 / -1;
+        }
+
+        /* Painel de itens do storage (inspector) */
+        .inspector {
+            background: #0d0d1a;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            min-height: 80px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+        }
+
+        .inspector-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 8px;
+            border-bottom: 1px solid #1a1a2e;
+            gap: 10px;
+        }
+
+        .inspector-item:last-child {
+            border-bottom: none;
+        }
+
+        .inspector-chave {
+            color: #eb00b0;
+            min-width: 100px;
+        }
+
+        .inspector-valor {
+            color: #e0e0e0;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .inspector-btn-remover {
+            background: #7b1c1c;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            margin: 0;
+        }
+
+        .inspector-btn-remover:hover {
+            background: #a02020;
+        }
+
+        .inspector-vazio {
+            color: #555;
+            font-style: italic;
+            padding: 8px;
+        }
+
+        /* Painel de log */
+        #painel-log {
+            grid-column: 1 / -1;
+            background: #0d0d1a;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #00e5ff;
+        }
+
+        #painel-log h2 {
+            color: #00e5ff;
+            margin-bottom: 14px;
+            font-size: 1.1rem;
+        }
+
+        #lista-log {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #lista-log li {
+            font-size: 0.82rem;
+            color: #00e5ff;
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a2e;
+            font-family: 'Courier New', monospace;
+        }
+
+        #lista-log li:first-child {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #btn-limpar-log {
+            background: #333;
+            margin-top: 12px;
+        }
+
+        #btn-limpar-log:hover {
+            background: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Web Storage no JavaScript</h1>
+        <p>localStorage e sessionStorage — armazenamento de dados no navegador sem servidor</p>
+    </header>
+
+    <!--
+        TABELA COMPARATIVA
+        Exibe lado a lado as diferenças fundamentais entre
+        localStorage e sessionStorage antes de qualquer interação.
+    -->
+    <table class="tabela-comparativa">
+        <thead>
+            <tr>
+                <th>Característica</th>
+                <th class="destaque-local">localStorage</th>
+                <th class="destaque-session">sessionStorage</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Duração dos dados</td>
+                <td>Persiste indefinidamente (até o usuário limpar)</td>
+                <td>Apagado ao fechar a aba ou o navegador</td>
+            </tr>
+            <tr>
+                <td>Escopo</td>
+                <td>Compartilhado entre todas as abas da mesma origem</td>
+                <td>Isolado por aba — cada aba tem o seu próprio</td>
+            </tr>
+            <tr>
+                <td>Capacidade típica</td>
+                <td>~5 MB por origem</td>
+                <td>~5 MB por origem</td>
+            </tr>
+            <tr>
+                <td>Enviado ao servidor?</td>
+                <td>Não (diferente de cookies)</td>
+                <td>Não (diferente de cookies)</td>
+            </tr>
+            <tr>
+                <td>Acessível via JS?</td>
+                <td>Sim — window.localStorage</td>
+                <td>Sim — window.sessionStorage</td>
+            </tr>
+            <tr>
+                <td>Tipo dos dados</td>
+                <td>Somente strings (use JSON para objetos)</td>
+                <td>Somente strings (use JSON para objetos)</td>
+            </tr>
+            <tr>
+                <td>Uso típico</td>
+                <td>Preferências, tema, token de sessão longa</td>
+                <td>Dados de formulário em progresso, carrinho temporário</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <main>
+
+        <!-- ===== SEÇÃO 1 — localStorage: setItem / getItem ===== -->
+        <!--
+            Os dois métodos mais usados do localStorage:
+              setItem(chave, valor) → salva um par chave/valor
+              getItem(chave)        → lê o valor de uma chave (null se não existir)
+            Ambos aceitam SOMENTE strings — use JSON.stringify/parse para objetos.
+        -->
+        <section id="secao-ls-basico" class="local">
+            <h2>1. localStorage — setItem e getItem</h2>
+            <p class="descricao">
+                Salve e recupere strings simples no localStorage.
+                Recarregue a página e veja que os dados continuam lá.
+            </p>
+
+            <label for="ls-chave">Chave:</label>
+            <input type="text" id="ls-chave" placeholder="Ex: nomeUsuario" value="nomeUsuario" />
+
+            <label for="ls-valor">Valor:</label>
+            <input type="text" id="ls-valor" placeholder="Ex: Ana" value="Ana" />
+
+            <button id="btn-ls-set" class="local">setItem</button>
+            <button id="btn-ls-get" class="secundario">getItem</button>
+
+            <label style="margin-top:10px;">Resultado:</label>
+            <div class="saida-codigo" id="saida-ls-basico">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 2 — sessionStorage: setItem / getItem ===== -->
+        <!--
+            sessionStorage tem a mesma API do localStorage,
+            mas os dados vivem apenas enquanto a aba estiver aberta.
+            Fechar a aba apaga tudo automaticamente.
+        -->
+        <section id="secao-ss-basico" class="session">
+            <h2>2. sessionStorage — setItem e getItem</h2>
+            <p class="descricao">
+                Funciona exatamente como o localStorage, mas os dados
+                somem ao fechar esta aba. Abra numa nova aba e veja que
+                os dados <strong>não são compartilhados</strong>.
+            </p>
+
+            <label for="ss-chave">Chave:</label>
+            <input type="text" id="ss-chave" placeholder="Ex: paginaAtual" value="paginaAtual" />
+
+            <label for="ss-valor">Valor:</label>
+            <input type="text" id="ss-valor" placeholder="Ex: checkout" value="checkout" />
+
+            <button id="btn-ss-set" class="session">setItem</button>
+            <button id="btn-ss-get" class="secundario">getItem</button>
+
+            <label style="margin-top:10px;">Resultado:</label>
+            <div class="saida-codigo" id="saida-ss-basico">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 3 — removeItem e clear ===== -->
+        <!--
+            removeItem(chave) → remove apenas a chave informada
+            clear()           → apaga TUDO do storage de uma vez
+            Ambos disponíveis em localStorage e sessionStorage.
+        -->
+        <section id="secao-remover" class="local">
+            <h2>3. removeItem e clear — localStorage</h2>
+            <p class="descricao">
+                Use <strong>removeItem</strong> para apagar uma chave específica
+                e <strong>clear</strong> para limpar todo o localStorage de uma vez.
+                Cuidado: clear() afeta todos os dados salvos pela sua aplicação.
+            </p>
+
+            <label for="ls-remover-chave">Chave a remover:</label>
+            <input type="text" id="ls-remover-chave" placeholder="Ex: nomeUsuario" value="nomeUsuario" />
+
+            <button id="btn-ls-remove" class="perigo">removeItem</button>
+            <button id="btn-ls-clear" class="perigo">clear (apaga tudo)</button>
+
+            <label style="margin-top:10px;">Resultado:</label>
+            <div class="saida-codigo" id="saida-ls-remover">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 4 — length e key() ===== -->
+        <!--
+            length    → número de itens armazenados
+            key(index)→ retorna a chave na posição [index]
+            Com esses dois é possível iterar sobre todo o storage
+            sem saber os nomes das chaves antecipadamente.
+        -->
+        <section id="secao-iterar" class="local">
+            <h2>4. Iterando o localStorage (length + key)</h2>
+            <p class="descricao">
+                <strong>localStorage.length</strong> informa quantos itens existem.
+                <strong>localStorage.key(i)</strong> retorna a chave na posição i.
+                Juntos permitem listar tudo que está salvo.
+            </p>
+
+            <button id="btn-listar-ls" class="local">Listar todos os itens</button>
+            <button id="btn-ls-preencher" class="secundario">Preencher com exemplos</button>
+
+            <!-- Inspector visual: cada chave/valor aparece como linha removível -->
+            <div class="inspector" id="inspector-ls">
+                <span class="inspector-vazio">Clique em "Listar" para inspecionar</span>
+            </div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 5 — Salvando objetos com JSON ===== -->
+        <!--
+            Web Storage só armazena strings.
+            Para salvar objetos completos o fluxo é:
+              SALVAR: JSON.stringify(objeto) → setItem(chave, string)
+              LER:    getItem(chave) → JSON.parse(string) → objeto
+            Esse padrão é revisão da Aula 21 aplicada na prática.
+        -->
+        <section id="secao-objeto" class="coluna-dupla local">
+            <h2>5. Armazenando Objetos com JSON.stringify / JSON.parse</h2>
+            <p class="descricao">
+                O Web Storage só aceita strings. Para persistir objetos completos usamos
+                <strong>JSON.stringify</strong> ao salvar e <strong>JSON.parse</strong> ao ler —
+                o mesmo padrão visto na Aula 21, agora aplicado ao localStorage.
+            </p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div>
+                    <label for="obj-nome">Nome:</label>
+                    <input type="text" id="obj-nome" value="Carlos" />
+
+                    <label for="obj-email">E-mail:</label>
+                    <input type="text" id="obj-email" value="carlos@email.com" />
+
+                    <label for="obj-tema">Tema preferido:</label>
+                    <input type="text" id="obj-tema" value="escuro" />
+
+                    <button id="btn-obj-salvar" class="local">Salvar objeto no localStorage</button>
+                    <button id="btn-obj-ler" class="secundario">Ler e exibir objeto</button>
+                    <button id="btn-obj-remover" class="perigo" style="margin-top:4px;">Remover objeto</button>
+                </div>
+                <div>
+                    <label>String salva no localStorage (resultado de stringify):</label>
+                    <div class="saida-codigo" id="saida-obj-string">—</div>
+
+                    <label style="margin-top:10px;">Objeto após JSON.parse (propriedades acessíveis):</label>
+                    <div class="saida-codigo" id="saida-obj-parsed">—</div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 6 — sessionStorage: dados por aba ===== -->
+        <!--
+            Demonstração prática do isolamento do sessionStorage:
+            cada aba tem seu próprio espaço independente.
+            Útil para formulários multi-etapas ou abas paralelas com contextos diferentes.
+        -->
+        <section id="secao-ss-avancado" class="session">
+            <h2>6. sessionStorage — Rascunho por Aba</h2>
+            <p class="descricao">
+                Simula um rascunho automático de formulário. Os dados são salvos
+                a cada digitação (evento <strong>input</strong>) e restaurados ao
+                recarregar a página — mas somem ao fechar a aba.
+            </p>
+
+            <label for="ss-rascunho">Mensagem (rascunho automático):</label>
+            <textarea id="ss-rascunho" rows="4" placeholder="Digite aqui — o rascunho é salvo automaticamente..."></textarea>
+
+            <button id="btn-ss-limpar-rascunho" class="perigo">Descartar rascunho</button>
+
+            <label style="margin-top:10px;">Status do rascunho:</label>
+            <div class="saida-codigo" id="saida-ss-rascunho">—</div>
+        </section>
+
+
+        <!-- ===== SEÇÃO 7 — Evento storage ===== -->
+        <!--
+            O evento 'storage' dispara no window quando o localStorage
+            é alterado por OUTRA aba da mesma origem.
+            É a forma de sincronizar dados entre abas em tempo real.
+            Nota: NÃO dispara na aba que fez a alteração — apenas nas outras.
+        -->
+        <section id="secao-evento" class="coluna-dupla">
+            <h2>7. Evento storage — Sincronização entre Abas</h2>
+            <p class="descricao">
+                O evento <strong>window.addEventListener('storage', ...)</strong> dispara
+                quando o <strong>localStorage</strong> é modificado por outra aba da mesma origem.
+                Abra esta página em duas abas e salve um valor na Seção 1 — observe o log nesta aba.
+                <br><br>
+                <em>Importante: o evento NÃO dispara na aba que fez a alteração — só nas outras.</em>
+            </p>
+
+            <button id="btn-simular-storage" class="secundario">Simular alteração (mesma aba — para teste)</button>
+
+            <label style="margin-top:10px;">Último evento storage recebido:</label>
+            <div class="saida-codigo" id="saida-evento-storage">Aguardando evento de outra aba...</div>
+        </section>
+
+
+        <!-- ===== PAINEL DE LOG ===== -->
+        <aside id="painel-log">
+            <h2>&#128196; Log de Operações</h2>
+            <ul id="lista-log"></ul>
+            <button id="btn-limpar-log">Limpar log</button>
+        </aside>
+
+    </main>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
